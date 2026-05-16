@@ -1,0 +1,241 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <string>
+#include <limits>
+
+using namespace std;
+
+class Restaurant {
+public:
+    int id;
+    string name;
+
+    Restaurant(int i, string n) {
+        id = i;
+        name = n;
+    }
+};
+
+class Order {
+public:
+    int orderId;
+    string customerName;
+    string foodItem;
+    int restaurantId;
+
+    Order(int oid, string cname, string item, int rid) {
+        orderId = oid;
+        customerName = cname;
+        foodItem = item;
+        restaurantId = rid;
+    }
+};
+
+class FoodDeliverySystem {
+private:
+    vector<Restaurant> restaurants;
+    queue<Order> orderQueue;
+    vector<vector<int>> graph;
+    int orderCounter;
+
+public:
+    FoodDeliverySystem() {
+        orderCounter = 1;
+
+        restaurants.push_back(Restaurant(0, "Pizza Hub"));
+        restaurants.push_back(Restaurant(1, "Burger Point"));
+        restaurants.push_back(Restaurant(2, "Andhra Spice"));
+        restaurants.push_back(Restaurant(3, "Food Express"));
+
+        graph = {
+            {0, 4, 2, 7},
+            {4, 0, 5, 1},
+            {2, 5, 0, 6},
+            {7, 1, 6, 0}
+        };
+    }
+
+    void displayRestaurants() {
+        cout << "\n===== AVAILABLE RESTAURANTS =====\n";
+
+        for(auto r : restaurants) {
+            cout << r.id << ". " << r.name << endl;
+        }
+    }
+
+    void placeOrder() {
+        string customerName;
+        string foodItem;
+        int restaurantId;
+
+        cin.ignore();
+
+        cout << "Enter Customer Name: ";
+        getline(cin, customerName);
+
+        displayRestaurants();
+
+        cout << "Choose Restaurant ID: ";
+        cin >> restaurantId;
+
+        if(restaurantId < 0 || restaurantId >= restaurants.size()) {
+            cout << "Invalid Restaurant ID!\n";
+            return;
+        }
+
+        cin.ignore();
+
+        cout << "Enter Food Item: ";
+        getline(cin, foodItem);
+
+        Order newOrder(orderCounter++, customerName, foodItem, restaurantId);
+
+        orderQueue.push(newOrder);
+
+        cout << "Order Placed Successfully!\n";
+    }
+
+    void processOrder() {
+
+        if(orderQueue.empty()) {
+            cout << "No Orders Available!\n";
+            return;
+        }
+
+        Order current = orderQueue.front();
+        orderQueue.pop();
+
+        cout << "\n===== PROCESSING ORDER =====\n";
+        cout << "Order ID: " << current.orderId << endl;
+        cout << "Customer Name: " << current.customerName << endl;
+        cout << "Food Item: " << current.foodItem << endl;
+        cout << "Restaurant: "
+             << restaurants[current.restaurantId].name << endl;
+
+        int shortestDistance = shortestPath(current.restaurantId, 3);
+
+        cout << "Estimated Delivery Distance: "
+             << shortestDistance << " KM" << endl;
+
+        cout << "Order Delivered Successfully!\n";
+    }
+
+    int shortestPath(int source, int destination) {
+
+        int n = graph.size();
+
+        vector<int> distance(n, INT_MAX);
+        vector<bool> visited(n, false);
+
+        distance[source] = 0;
+
+        for(int i = 0; i < n - 1; i++) {
+
+            int minDistance = INT_MAX;
+            int u = -1;
+
+            for(int j = 0; j < n; j++) {
+                if(!visited[j] && distance[j] < minDistance) {
+                    minDistance = distance[j];
+                    u = j;
+                }
+            }
+
+            if(u == -1)
+                break;
+
+            visited[u] = true;
+
+            for(int v = 0; v < n; v++) {
+
+                if(graph[u][v] && !visited[v]
+                   && distance[u] != INT_MAX
+                   && distance[u] + graph[u][v] < distance[v]) {
+
+                    distance[v] = distance[u] + graph[u][v];
+                }
+            }
+        }
+
+        return distance[destination];
+    }
+
+    void displayPendingOrders() {
+
+        if(orderQueue.empty()) {
+            cout << "No Pending Orders!\n";
+            return;
+        }
+
+        queue<Order> tempQueue = orderQueue;
+
+        cout << "\n===== PENDING ORDERS =====\n";
+
+        while(!tempQueue.empty()) {
+
+            Order current = tempQueue.front();
+            tempQueue.pop();
+
+            cout << "Order ID: " << current.orderId
+                 << " | Customer: " << current.customerName
+                 << " | Food: " << current.foodItem
+                 << " | Restaurant: "
+                 << restaurants[current.restaurantId].name << endl;
+        }
+    }
+
+    void menu() {
+
+        int choice;
+
+        do {
+
+            cout << "\n===== FOOD DELIVERY SYSTEM =====\n";
+            cout << "1. Display Restaurants\n";
+            cout << "2. Place Order\n";
+            cout << "3. Process Order\n";
+            cout << "4. Display Pending Orders\n";
+            cout << "5. Exit\n";
+
+            cout << "Enter Your Choice: ";
+            cin >> choice;
+
+            switch(choice) {
+
+                case 1:
+                    displayRestaurants();
+                    break;
+
+                case 2:
+                    placeOrder();
+                    break;
+
+                case 3:
+                    processOrder();
+                    break;
+
+                case 4:
+                    displayPendingOrders();
+                    break;
+
+                case 5:
+                    cout << "Exiting System...\n";
+                    break;
+
+                default:
+                    cout << "Invalid Choice!\n";
+            }
+
+        } while(choice != 5);
+    }
+};
+
+int main() {
+
+    FoodDeliverySystem system;
+
+    system.menu();
+
+    return 0;
+}
